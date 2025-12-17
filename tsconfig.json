@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", 
+    "module": "NodeNext", // Esto ayuda a Node 24 a resolver mejor las librerías
+    "moduleResolution": "nodenext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
