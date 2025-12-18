@@ -1,18 +1,21 @@
+import { EventBus } from "../../Shared/Infrastructure/Bus/EventBus";
+import { NodeEventEmitterBus } from "../../Shared/Infrastructure/Bus/NodeEventEmitterBus";
 import { User } from "../Domain/User";
+import { UserRegisteredEvent } from "../Domain/UserRegisteredEvent";
 import { UserRepository } from "../Domain/UserRepository";
 
 export class RegisterUserService {
-    constructor(private userRepository: UserRepository) {
+    constructor(private userRepository: UserRepository,private eventBus: EventBus) {
 
     }
-
-    async execute(id:string, name:string,email:string):Promise<void> {
+    async execute(id:string,name:string,email:string,phone:string):Promise<void> {
         const existingUser = await this.userRepository.findByEmail(email);
         if ( existingUser ) {
             throw new Error('User with this email already exists');
         }
-
-        const user = new User(id,name,email);
+        const user  = User.create(id,name,email,phone);
         await this.userRepository.save(user);
+        const event = new UserRegisteredEvent(user.id!,user.name,user.email);
+        this.eventBus.publish(event);
     }
 }

@@ -1,5 +1,8 @@
 import { Request,Response } from "express";
 import { RegisterUserService } from "../../Application/RegisterUserService";
+import { CreateUserSchema } from "../Dtos/CreateUserRequest";
+import { randomUUID } from "node:crypto";
+import { IdGenerator } from "../../../Shared/Infrastructure/IdGenerator";
 
 
 export class UserController {
@@ -7,9 +10,19 @@ export class UserController {
 
 
     async create(re:Request,res:Response) {
-        const {id,email,name} = re.body;
+        const validation = CreateUserSchema.safeParse(re.body);
+
+
+
+        if(!validation.success) {
+            return res.status(400).json({
+                message: "Datos de entrada inválidos"
+            })
+        }
+        const {name,email,phone} = validation.data;
+        const randomUID = IdGenerator.generate();
         try {
-            await this.registeUserService.execute(id,name,email);
+            await this.registeUserService.execute(randomUID,name,email,phone);
             res.status(201).send({message: 'User created successfully'});
         }catch (error){
             res.status(400).send({error: (error as Error).message});

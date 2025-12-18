@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "..db/generated/prisma"
+  output   = "../db/generated/prisma"
 }
 
 datasource db {
@@ -14,7 +14,104 @@ datasource db {
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  email String @unique
-  name String?
+  id        String       @id @default(uuid()) @db.VarChar(36)
+  name      String
+  email     String    @unique
+  password  String?
+  phoneNumber String?  
+  role      String    @default("ADMIN")
+  businessId String?    @db.VarChar(36)
+  business   Business? @relation(fields: [businessId], references: [id])
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Business {
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  name         String
+  whatsappId   String    @unique
+  subscription String    @default("FREE")
+  
+  users        User[]
+  products     Product[]
+  clients      BusinessClient[]
+  orders       Order[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+}
+
+model Client {
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  phoneNumber String    @unique
+  fullName    String?
+  
+  businesses  BusinessClient[]
+  orders      Order[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+}
+
+model BusinessClient {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  businessId String   @db.VarChar(36)
+  clientId   String   @db.VarChar(36)
+  business   Business @relation(fields: [businessId], references: [id])
+  client     Client   @relation(fields: [clientId], references: [id])
+
+  createdAt  DateTime @default(now())
+  deletedAt  DateTime?
+
+  @@unique([businessId, clientId])
+}
+
+model Product {
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  name        String
+  description String?
+  price       Decimal   @db.Decimal(10, 2)
+  stock       Int       @default(0)
+  imageUrl    String?
+  businessId  String    @db.VarChar(36)
+  business    Business  @relation(fields: [businessId], references: [id])
+
+  orderItems  OrderItem[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+}
+
+model Order {
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  total         Decimal   @db.Decimal(10, 2)
+  status        String    @default("PENDING")
+  paymentMethod String?
+  
+  businessId    String    @db.VarChar(36)
+  clientId      String    @db.VarChar(36)
+  business      Business  @relation(fields: [businessId], references: [id])
+  client        Client    @relation(fields: [clientId], references: [id])
+  
+  items         OrderItem[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+}
+
+model OrderItem {
+  id        String  @id @default(uuid()) @db.VarChar(36)
+  orderId   String  @db.VarChar(36)
+  productId String  @db.VarChar(36)
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+  
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 }

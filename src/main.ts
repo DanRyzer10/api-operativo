@@ -6,6 +6,9 @@ import { AppContext } from './Shared/Infrastructure/AppContext';
 const app = express();
 app.use(express.json());
 
+
+AppContext.eventSetup();
+
 const userController     = AppContext.getUserController();
 
 app.post('/users', (req, res) => userController.create(req, res));

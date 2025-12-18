@@ -6,13 +6,19 @@ import { PrismaUserRepository } from "../../User/Infrastructure/Persistence/Pris
 import { ReportDispatcher } from "../../Reporting/Domain/ReportDispatcher";
 import { CLOUD_PROVIDER } from "../../constants";
 import { AwsGlueDispatcher } from "../../Reporting/Infrastructure/AwsGlueDispatcher";
+import { NodeEventEmitterBus } from "./Bus/NodeEventEmitterBus";
+import { WelcomeWhatsAppSubscriber } from "../../Messages/Infrastructure/Subscribers/WelcomeWhatsAppSubscriber";
+import { WhatsAppBusinessService } from "../../Messages/Infrastructure/External/WhatsAppBusinessService";
 
 export class AppContext {
 
     /***MODULO USUARIO ******* */
-    private static _userRepository: PrismaUserRepository= new PrismaUserRepository();
+    private static _userRepository      = new PrismaUserRepository();
+    private static _nodeEventEmitterBus = new NodeEventEmitterBus();
+    private static _whatsAppSender      = new WhatsAppBusinessService();
+
     private static _getRegisterUserService():RegisterUserService {
-        return new RegisterUserService(this._userRepository);
+        return new RegisterUserService(this._userRepository,this._nodeEventEmitterBus);
     }
     public static getUserController():UserController {
         return new UserController(this._getRegisterUserService());
@@ -26,5 +32,14 @@ export class AppContext {
 
         }
         return new AwsGlueDispatcher()
+    }
+
+    /**
+     * Configuración de los suscriptores de eventos
+     */
+    public static eventSetup() : void {
+        const welcomeSubscriber = new WelcomeWhatsAppSubscriber(this._whatsAppSender);
+        welcomeSubscriber.setup(this._nodeEventEmitterBus);
+
     }
 }
