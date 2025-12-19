@@ -6,26 +6,77 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../db/generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "mysql"
 }
 
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+  CLIENT
+}
+enum Permission {
+  // User permissions
+  USER_CREATE
+  USER_READ
+  USER_UPDATE
+  USER_DELETE
+  
+  // Business permissions
+  BUSINESS_CREATE
+  BUSINESS_READ
+  BUSINESS_UPDATE
+  BUSINESS_DELETE
+  
+  // Product permissions
+  PRODUCT_CREATE
+  PRODUCT_READ
+  PRODUCT_UPDATE
+  PRODUCT_DELETE
+  
+  // Order permissions
+  ORDER_CREATE
+  ORDER_READ
+  ORDER_UPDATE
+  ORDER_DELETE
+  
+  // Client permissions
+  CLIENT_CREATE
+  CLIENT_READ
+  CLIENT_UPDATE
+  CLIENT_DELETE
+  
+  // Report permissions
+  REPORT_GENERATE
+  REPORT_VIEW
+  REPORT_EXPORT
+}
 model User {
   id        String       @id @default(uuid()) @db.VarChar(36)
   name      String
   email     String    @unique
   password  String?
   phoneNumber String?  
-  role      String    @default("ADMIN")
+  role      Role
   businessId String?    @db.VarChar(36)
   business   Business? @relation(fields: [businessId], references: [id])
   
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+}
+
+model RolePermission {
+  id        String  @id @default(uuid()) @db.VarChar(36)
+  role      Role
+  permission Permission
+  createdAt DateTime @default(now())
+  @@unique([role, permission])
 }
 
 model Business {

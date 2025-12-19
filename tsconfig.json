@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2023", 
-    "module": "NodeNext", // Esto ayuda a Node 24 a resolver mejor las librerías
-    "moduleResolution": "nodenext",
+    "module": "CommonJS", // Esto ayuda a Node 24 a resolver mejor las librerías
+    "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src",
     "esModuleInterop": true,

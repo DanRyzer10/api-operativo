@@ -11,18 +11,15 @@ export class UserController {
 
     async create(re:Request,res:Response) {
         const validation = CreateUserSchema.safeParse(re.body);
-
-
-
         if(!validation.success) {
             return res.status(400).json({
                 message: "Datos de entrada inválidos"
             })
         }
-        const {name,email,phone} = validation.data;
+        const {name,email,phone,role} = validation.data;
         const randomUID = IdGenerator.generate();
         try {
-            await this.registeUserService.execute(randomUID,name,email,phone);
+            await this.registeUserService.execute(randomUID,name,email,phone,role!);
             res.status(201).send({message: 'User created successfully'});
         }catch (error){
             res.status(400).send({error: (error as Error).message});

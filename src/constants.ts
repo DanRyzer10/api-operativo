@@ -4,5 +4,6 @@ export const DATABASE_USER = process.env.DATABASE_USER
 export const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD
 export const DATABASE_NAME = process.env.DATABASE_NAME
 export const CONNECTION_LIMIT = process.env.CONNECTION_LIMIT || 5
-
 export const CLOUD_PROVIDER = process.env.CLOUD_PROVIDER || 'aws'
+export const JWT_SECRET = process.env.JWT_SECRET 
+export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h'
