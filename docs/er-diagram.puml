@@ -1,0 +1,297 @@
+@startuml ERD - Sistema Operativo
+
+!define TABLE(x) entity x << (T,#FFAAAA) >>
+!define PK(x) <u>x</u>
+!define FK(x) <i>x</i>
+
+skinparam backgroundColor #FEFEFE
+skinparam entity {
+  BackgroundColor LightYellow
+  BorderColor Black
+  ArrowColor Gray
+}
+
+' Enums
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+  CLIENT
+}
+
+enum Permission {
+  USER_CREATE
+  USER_READ
+  USER_UPDATE
+  USER_DELETE
+  BUSINESS_*
+  PRODUCT_*
+  ORDER_*
+  CLIENT_*
+  REPORT_*
+  FLOW_*
+  BOT_*
+  CATEGORY_*
+  CATALOG_*
+}
+
+' Catálogos
+entity "Catalog" as Catalog {
+  PK(id): UUID
+  --
+  code: String (unique)
+  name: String
+  description: String?
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+}
+
+entity "CatalogItem" as CatalogItem {
+  PK(id): UUID
+  --
+  FK(catalogId): UUID
+  code: String
+  name: String
+  description: String?
+  order: Int
+  isActive: Boolean
+  metadata: Text (JSON)
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+}
+
+' Usuarios y Permisos
+entity "User" as User {
+  PK(id): UUID
+  --
+  name: String
+  email: String (unique)
+  password: String?
+  phoneNumber: String?
+  role: Role
+  FK(businessId): UUID?
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+}
+
+entity "RolePermission" as RolePermission {
+  PK(id): UUID
+  --
+  role: Role
+  permission: Permission
+  createdAt: DateTime
+}
+
+' Negocio
+entity "Business" as Business {
+  PK(id): UUID
+  --
+  name: String
+  whatsappId: String (unique)
+  FK(subscriptionId): UUID?
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+}
+
+' Clientes
+entity "Client" as Client {
+  PK(id): UUID
+  --
+  phoneNumber: String (unique)
+  fullName: String?
+  email: String?
+  address: String?
+  city: String?
+  state: String?
+  country: String?
+  postalCode: String?
+  tags: Text (JSON)
+  notes: Text?
+  FK(sourceId): UUID?
+  FK(statusId): UUID?
+  lastContactDate: DateTime?
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+}
+
+entity "BusinessClient" as BusinessClient {
+  PK(id): UUID
+  --
+  FK(businessId): UUID
+  FK(clientId): UUID
+  createdAt: DateTime
+  deletedAt: DateTime?
+}
+
+' Productos y Categorías
+entity "Product" as Product {
+  PK(id): UUID
+  --
+  name: String
+  description: String?
+  price: Decimal(10,2)
+  stock: Int
+  imageUrl: String?
+  sku: String?
+  isActive: Boolean
+  FK(businessId): UUID
+  FK(categoryId): UUID?
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+}
+
+entity "Category" as Category {
+  PK(id): UUID
+  --
+  name: String
+  description: String?
+  parentId: UUID?
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+}
+
+' Órdenes
+entity "Order" as Order {
+  PK(id): UUID
+  --
+  orderNumber: String (unique)
+  total: Decimal(10,2)
+  FK(statusId): UUID?
+  FK(paymentMethodId): UUID?
+  FK(paymentStatusId): UUID?
+  notes: Text?
+  FK(businessId): UUID
+  FK(clientId): UUID
+  FK(botId): UUID?
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+}
+
+entity "OrderItem" as OrderItem {
+  PK(id): UUID
+  --
+  FK(orderId): UUID
+  FK(productId): UUID
+  quantity: Int
+  price: Decimal(10,2)
+  subtotal: Decimal(10,2)
+  createdAt: DateTime
+}
+
+' Flujos y Bots
+entity "Flow" as Flow {
+  PK(id): UUID
+  --
+  name: String
+  description: Text?
+  isActive: Boolean
+  configuration: Text (JSON)?
+  FK(createdBy): UUID
+  activatedBy: UUID?
+  createdAt: DateTime
+  updatedAt: DateTime
+  activatedAt: DateTime?
+  deletedAt: DateTime?
+}
+
+entity "Bot" as Bot {
+  PK(id): UUID
+  --
+  name: String
+  description: Text?
+  isActive: Boolean
+  FK(botTypeId): UUID?
+  configuration: Text (JSON)?
+  FK(flowId): UUID?
+  FK(createdBy): UUID
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+}
+
+entity "MessageNode" as MessageNode {
+  PK(id): UUID
+  --
+  name: String
+  FK(nodeTypeId): UUID?
+  content: Text?
+  order: Int
+  configuration: Text (JSON)?
+  FK(flowId): UUID
+  parentNodeId: UUID?
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+}
+
+' Relaciones Catálogos
+Catalog ||--o{ CatalogItem : "tiene items"
+
+' Relaciones Usuario-Negocio
+Business ||--o{ User : "tiene usuarios"
+User ||--o{ Flow : "crea flujos"
+User ||--o{ Bot : "crea bots"
+
+' Relaciones Catálogo Items (múltiples usos)
+CatalogItem ||--o{ Client : "status"
+CatalogItem ||--o{ Client : "source"
+CatalogItem ||--o{ Order : "status"
+CatalogItem ||--o{ Order : "paymentMethod"
+CatalogItem ||--o{ Order : "paymentStatus"
+CatalogItem ||--o{ Bot : "botType"
+CatalogItem ||--o{ MessageNode : "nodeType"
+CatalogItem ||--o{ Business : "subscription"
+
+' Relaciones Cliente-Negocio
+Business ||--o{ BusinessClient : "tiene"
+Client ||--o{ BusinessClient : "pertenece"
+
+' Relaciones Productos
+Business ||--o{ Product : "vende"
+Category ||--o{ Product : "clasifica"
+
+' Relaciones Órdenes
+Business ||--o{ Order : "gestiona"
+Client ||--o{ Order : "realiza"
+Bot ||--o{ Order : "procesa"
+Order ||--|{ OrderItem : "contiene"
+Product ||--o{ OrderItem : "incluido en"
+
+' Relaciones Flujos
+Flow ||--o{ Bot : "implementado por"
+Flow ||--o{ MessageNode : "compuesto por"
+
+note right of Catalog
+  Catálogo maestro para 
+  gestionar valores dinámicos:
+  - Estados de cliente
+  - Estados de orden
+  - Tipos de bot
+  - Métodos de pago
+  - etc.
+end note
+
+note right of Client
+  Cliente unificado con
+  múltiples negocios
+  asociados via 
+  BusinessClient
+end note
+
+note right of Flow
+  Define flujos de conversación
+  para los chatbots con nodos
+  de mensaje configurables
+end note
+
+@enduml
