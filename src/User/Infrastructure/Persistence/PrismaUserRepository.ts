@@ -1,6 +1,7 @@
 import { User } from "../../Domain/User";
 import { UserRepository } from "../../Domain/UserRepository";
 import { prisma } from "../../../Shared/Infrastructure/PrismaClient";
+import { Role } from "../../../generated/prisma/enums";
 
 export class PrismaUserRepository implements UserRepository {
 
@@ -11,6 +12,7 @@ export class PrismaUserRepository implements UserRepository {
                 email: user.email,
                 id: user.id!,
                 phoneNumber: user.phoneNumber,
+                role: user.role as Role
                 
             }
         })

@@ -97,7 +97,6 @@ export class CatalogService {
       }
     }
 
-    console.log(`✅ Catálogos pre-cargados en memoria: ${catalogs.length} catálogos`);
   }
 }
 
