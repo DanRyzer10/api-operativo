@@ -13,99 +13,188 @@ datasource db {
   provider = "mysql"
 }
 
-
 enum Role {
   ADMIN
   MANAGER
   EMPLOYEE
   CLIENT
 }
+
 enum Permission {
   // User permissions
   USER_CREATE
   USER_READ
   USER_UPDATE
   USER_DELETE
-  
+
   // Business permissions
   BUSINESS_CREATE
   BUSINESS_READ
   BUSINESS_UPDATE
   BUSINESS_DELETE
-  
+
   // Product permissions
   PRODUCT_CREATE
   PRODUCT_READ
   PRODUCT_UPDATE
   PRODUCT_DELETE
-  
+
   // Order permissions
   ORDER_CREATE
   ORDER_READ
   ORDER_UPDATE
   ORDER_DELETE
-  
+
   // Client permissions
   CLIENT_CREATE
   CLIENT_READ
   CLIENT_UPDATE
   CLIENT_DELETE
-  
+
   // Report permissions
   REPORT_GENERATE
   REPORT_VIEW
   REPORT_EXPORT
+
+  // Flow permissions
+  FLOW_CREATE
+  FLOW_READ
+  FLOW_UPDATE
+  FLOW_DELETE
+  FLOW_ACTIVATE
+
+  // Bot permissions
+  BOT_CREATE
+  BOT_READ
+  BOT_UPDATE
+  BOT_DELETE
+  BOT_ACTIVATE
+
+  // Category permissions
+  CATEGORY_CREATE
+  CATEGORY_READ
+  CATEGORY_UPDATE
+  CATEGORY_DELETE
+
+  // Catalog permissions
+  CATALOG_CREATE
+  CATALOG_READ
+  CATALOG_UPDATE
+  CATALOG_DELETE
 }
+
+model Catalog {
+  id          String  @id @default(uuid()) @db.VarChar(36)
+  code        String  @unique // CLIENT_STATUS, ORDER_STATUS, BOT_TYPE, etc
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+
+  items CatalogItem[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model CatalogItem {
+  id          String  @id @default(uuid()) @db.VarChar(36)
+  catalogId   String  @db.VarChar(36)
+  code        String // ACTIVE, PENDING, WHATSAPP, etc
+  name        String
+  description String?
+  order       Int     @default(0)
+  isActive    Boolean @default(true)
+  metadata    String? @db.Text // JSON for additional properties
+
+  catalog Catalog @relation(fields: [catalogId], references: [id])
+
+  // Relations
+  clientsStatus        Client[]      @relation("ClientStatus")
+  clientsSource        Client[]      @relation("ClientSource")
+  ordersStatus         Order[]       @relation("OrderStatus")
+  ordersPaymentMethod  Order[]       @relation("OrderPaymentMethod")
+  ordersPaymentStatus  Order[]       @relation("OrderPaymentStatus")
+  botTypes             Bot[]         @relation("BotType")
+  messageNodeTypes     MessageNode[] @relation("MessageNodeType")
+  businessSubscription Business[]    @relation("BusinessSubscription")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([catalogId, code])
+}
+
 model User {
-  id        String       @id @default(uuid()) @db.VarChar(36)
-  name      String
-  email     String    @unique
-  password  String?
-  phoneNumber String?  
-  role      Role
-  businessId String?    @db.VarChar(36)
-  business   Business? @relation(fields: [businessId], references: [id])
-  
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  name        String
+  email       String    @unique
+  password    String?
+  phoneNumber String?
+  role        Role
+  businessId  String?   @db.VarChar(36)
+  business    Business? @relation(fields: [businessId], references: [id])
+
+  // Relations
+  flows       Flow[]
+  botsCreated Bot[]
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 }
 
 model RolePermission {
-  id        String  @id @default(uuid()) @db.VarChar(36)
-  role      Role
+  id         String     @id @default(uuid()) @db.VarChar(36)
+  role       Role
   permission Permission
-  createdAt DateTime @default(now())
+  createdAt  DateTime   @default(now())
+
   @@unique([role, permission])
 }
 
 model Business {
-  id           String    @id @default(uuid()) @db.VarChar(36)
-  name         String
-  whatsappId   String    @unique
-  subscription String    @default("FREE")
-  
-  users        User[]
-  products     Product[]
-  clients      BusinessClient[]
-  orders       Order[]
+  id             String       @id @default(uuid()) @db.VarChar(36)
+  name           String
+  whatsappId     String       @unique
+  subscriptionId String?      @db.VarChar(36)
+  subscription   CatalogItem? @relation("BusinessSubscription", fields: [subscriptionId], references: [id])
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deletedAt    DateTime?
+  users    User[]
+  products Product[]
+  clients  BusinessClient[]
+  orders   Order[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 model Client {
-  id          String    @id @default(uuid()) @db.VarChar(36)
-  phoneNumber String    @unique
-  fullName    String?
-  
-  businesses  BusinessClient[]
-  orders      Order[]
+  id              String       @id @default(uuid()) @db.VarChar(36)
+  phoneNumber     String       @unique
+  fullName        String?
+  email           String?
+  address         String?
+  city            String?
+  state           String?
+  country         String?
+  postalCode      String?
+  tags            String?      @db.Text // JSON array of tags for categorization
+  notes           String?      @db.Text
+  sourceId        String?      @db.VarChar(36)
+  statusId        String?      @db.VarChar(36)
+  source          CatalogItem? @relation("ClientSource", fields: [sourceId], references: [id])
+  status          CatalogItem? @relation("ClientStatus", fields: [statusId], references: [id])
+  lastContactDate DateTime?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  businesses BusinessClient[]
+  orders     Order[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 model BusinessClient {
@@ -115,8 +204,8 @@ model BusinessClient {
   business   Business @relation(fields: [businessId], references: [id])
   client     Client   @relation(fields: [clientId], references: [id])
 
-  createdAt  DateTime @default(now())
-  deletedAt  DateTime?
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
 
   @@unique([businessId, clientId])
 }
@@ -128,32 +217,44 @@ model Product {
   price       Decimal   @db.Decimal(10, 2)
   stock       Int       @default(0)
   imageUrl    String?
+  sku         String?
+  isActive    Boolean   @default(true)
   businessId  String    @db.VarChar(36)
+  categoryId  String?   @db.VarChar(36)
   business    Business  @relation(fields: [businessId], references: [id])
+  category    Category? @relation(fields: [categoryId], references: [id])
 
-  orderItems  OrderItem[]
+  orderItems OrderItem[]
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 model Order {
-  id            String    @id @default(uuid()) @db.VarChar(36)
-  total         Decimal   @db.Decimal(10, 2)
-  status        String    @default("PENDING")
-  paymentMethod String?
-  
-  businessId    String    @db.VarChar(36)
-  clientId      String    @db.VarChar(36)
-  business      Business  @relation(fields: [businessId], references: [id])
-  client        Client    @relation(fields: [clientId], references: [id])
-  
-  items         OrderItem[]
+  id              String       @id @default(uuid()) @db.VarChar(36)
+  orderNumber     String       @unique
+  total           Decimal      @db.Decimal(10, 2)
+  statusId        String?      @db.VarChar(36)
+  paymentMethodId String?      @db.VarChar(36)
+  paymentStatusId String?      @db.VarChar(36)
+  status          CatalogItem? @relation("OrderStatus", fields: [statusId], references: [id])
+  paymentMethod   CatalogItem? @relation("OrderPaymentMethod", fields: [paymentMethodId], references: [id])
+  paymentStatus   CatalogItem? @relation("OrderPaymentStatus", fields: [paymentStatusId], references: [id])
+  notes           String?      @db.Text
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  businessId String   @db.VarChar(36)
+  clientId   String   @db.VarChar(36)
+  botId      String?  @db.VarChar(36)
+  business   Business @relation(fields: [businessId], references: [id])
+  client     Client   @relation(fields: [clientId], references: [id])
+  bot        Bot?     @relation(fields: [botId], references: [id])
+
+  items OrderItem[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 model OrderItem {
@@ -162,7 +263,86 @@ model OrderItem {
   productId String  @db.VarChar(36)
   quantity  Int
   price     Decimal @db.Decimal(10, 2)
-  
-  order     Order   @relation(fields: [orderId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
+  subtotal  Decimal @db.Decimal(10, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Flow {
+  id            String  @id @default(uuid()) @db.VarChar(36)
+  name          String
+  description   String? @db.Text
+  isActive      Boolean @default(false)
+  configuration String? @db.Text // JSON configuration
+
+  createdBy   String  @db.VarChar(36)
+  activatedBy String? @db.VarChar(36)
+  creator     User    @relation(fields: [createdBy], references: [id])
+
+  // Relations
+  bots         Bot[]
+  messageNodes MessageNode[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  activatedAt DateTime?
+  deletedAt   DateTime?
+}
+
+model Bot {
+  id            String       @id @default(uuid()) @db.VarChar(36)
+  name          String
+  description   String?      @db.Text
+  isActive      Boolean      @default(true)
+  botTypeId     String?      @db.VarChar(36)
+  botType       CatalogItem? @relation("BotType", fields: [botTypeId], references: [id])
+  configuration String?      @db.Text // JSON configuration
+
+  flowId    String? @db.VarChar(36)
+  createdBy String  @db.VarChar(36)
+  flow      Flow?   @relation(fields: [flowId], references: [id])
+  creator   User    @relation(fields: [createdBy], references: [id])
+
+  // Relations
+  orders Order[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model MessageNode {
+  id            String       @id @default(uuid()) @db.VarChar(36)
+  name          String
+  nodeTypeId    String?      @db.VarChar(36)
+  nodeType      CatalogItem? @relation("MessageNodeType", fields: [nodeTypeId], references: [id])
+  content       String?      @db.Text
+  order         Int // Position in the flow
+  configuration String?      @db.Text // JSON for additional settings
+
+  flowId       String  @db.VarChar(36)
+  parentNodeId String? @db.VarChar(36)
+  flow         Flow    @relation(fields: [flowId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Category {
+  id          String  @id @default(uuid()) @db.VarChar(36)
+  name        String
+  description String?
+  parentId    String? @db.VarChar(36)
+  isActive    Boolean @default(true)
+
+  // Relations
+  products Product[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
