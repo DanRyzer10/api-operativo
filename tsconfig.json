@@ -3,6 +3,10 @@
     "target": "ES2023", 
     "module": "CommonJS", // Esto ayuda a Node 24 a resolver mejor las librerías
     "moduleResolution": "node",
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "outDir": "./dist",
     "rootDir": "./src",
     "esModuleInterop": true,
