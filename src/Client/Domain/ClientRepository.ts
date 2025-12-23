@@ -6,5 +6,6 @@ export interface ClientRepository {
     update(client:Client): Promise<void>;
     delete(clientId: string): Promise<void>;
     listAll(): Promise<Client[]>;
+    findById(clientId: string): Promise<Client | null>;
 
 }

@@ -1,5 +1,4 @@
 import { EventBus } from "../../Shared/Infrastructure/Bus/EventBus";
-import { NodeEventEmitterBus } from "../../Shared/Infrastructure/Bus/NodeEventEmitterBus";
 import { User } from "../Domain/User";
 import { UserRegisteredEvent } from "../Domain/UserRegisteredEvent";
 import { UserRepository } from "../Domain/UserRepository";

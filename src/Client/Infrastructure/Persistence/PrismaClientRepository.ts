@@ -96,4 +96,27 @@ export class PrismaClientRepsitory implements ClientRepository {
             deletedAt: clientData.deletedAt
         }));
     }
+    async findById(clientId: string): Promise<Client | null> {
+        const clientData = await prisma.client.findUnique({where: {id: clientId}});
+        if(!clientData) return null;
+        return Client.create({
+            id: clientData.id,
+            phoneNumber: clientData.phoneNumber,
+            fullName: clientData.fullName,
+            email: clientData.email,
+            address: clientData.address,
+            city: clientData.city,
+            state: clientData.state,
+            country: clientData.country,
+            postalCode: clientData.postalCode,
+            tags: clientData.tags!,
+            notes: clientData.notes,
+            sourceId: clientData.sourceId,
+            statusId: clientData.statusId,
+            lastContactDate: clientData.lastContactDate,
+            createdAt: clientData.createdAt,
+            updatedAt: clientData.updatedAt,
+            deletedAt: clientData.deletedAt
+        });
+    }
 }
