@@ -9,7 +9,7 @@ export class User {
         public readonly password: string | null = null,
     ) {}
 
-    public static create(id: string,name:string,email:string,phone:string,role:string): User {
-        return new User(id,name,email,phone,role)
+    public static create(id: string,name:string,email:string,phone:string,role:string,password?:string): User {
+        return new User(id,name,email,phone,role, new Date(), password);
     }
 }

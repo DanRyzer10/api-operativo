@@ -7,3 +7,5 @@ node_modules
 /generated/prisma
 # Logs
 logs
+.env.development
+.env.development

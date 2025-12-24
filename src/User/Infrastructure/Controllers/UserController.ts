@@ -16,10 +16,10 @@ export class UserController {
                 message: "Datos de entrada inválidos"
             })
         }
-        const {name,email,phone,role} = validation.data;
+        const {name,email,phone,role,password} = validation.data;
         const randomUID = IdGenerator.generate();
         try {
-            await this.registeUserService.execute(randomUID,name,email,phone,role!);
+            await this.registeUserService.execute(randomUID,name,email,phone,role!,password!);
             res.status(201).send({message: 'User created successfully'});
         }catch (error){
             res.status(400).send({error: (error as Error).message});

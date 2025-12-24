@@ -15,6 +15,7 @@ import { LoginService } from "../../Auth/Application/LoginService";
 import { AuthController } from "../../Auth/Infrastructure/Controllers/AuthController";
 import { WelcomeEmailSubscriber } from "../../Messages/Infrastructure/Subscribers/WelcomeEmailSubscriber";
 import { Logger } from "./Logger";
+import { AppwriteAuthService } from "@/Auth/Application/AppwriteAuthService";
 
 export class AppContext {
 
@@ -23,7 +24,7 @@ export class AppContext {
     private static _nodeEventEmitterBus = new NodeEventEmitterBus();
     private static _whatsAppSender      = new WhatsAppBusinessService();
     private static _logger              = new Logger();
-    private static authService : JwtAuthService;
+    private static authService : AppwriteAuthService;
     private static authMiddleware : AuthMiddleware;
     private static loginService : LoginService;
     private static authController : AuthController;
@@ -34,6 +35,22 @@ export class AppContext {
     public static getUserController():UserController {
         return new UserController(this._getRegisterUserService());
     }
+
+    public static getAuthController() : AuthController {
+        if(!this.authController) {
+            this.loginService = new LoginService(this._userRepository,this.authService);
+            this.authController = new AuthController(this.loginService);
+        }
+
+        return this.authController;
+    }
+
+    // public static getAuthMiddleware(): AuthMiddleware {
+    //     if (!this.authMiddleware) {
+    //         this.authMiddleware = new AuthMiddleware(this.authService);
+    //     }
+    //     return this.authMiddleware;
+    // }
 
     public static getReportDispatcher() :ReportDispatcher {
         const cloud = CLOUD_PROVIDER;

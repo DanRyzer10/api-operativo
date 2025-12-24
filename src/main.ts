@@ -10,8 +10,10 @@ app.use(express.json());
 AppContext.eventSetup();
 
 const userController     = AppContext.getUserController();
+const autController      = AppContext.getAuthController();
 
 app.post('/users', (req, res) => userController.create(req, res));
+app.post('/auth/login', (req,res) => autController.login(req,res));
 
 const PORT = process.env.PORT || 3000;
 
