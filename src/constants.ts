@@ -7,3 +7,6 @@ export const CONNECTION_LIMIT = process.env.CONNECTION_LIMIT || 5
 export const CLOUD_PROVIDER = process.env.CLOUD_PROVIDER || 'aws'
 export const JWT_SECRET = process.env.JWT_SECRET 
 export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h'
+export const APP_NAME = process.env.APP_NAME || 'MyApp'
+export const DIRECCION_EMPRESA = process.env.DIRECCION_EMPRESA || 'Dirección no proporcionada'
+export const LINK_DASHBOARD = process.env.LINK_DASHBOARD || 'https://myapp.example.com/dashboard'

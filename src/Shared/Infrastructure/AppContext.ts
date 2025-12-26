@@ -13,9 +13,10 @@ import { JwtAuthService } from "../../Auth/Infrastructure/JwtAuthService";
 import { AuthMiddleware } from "../../Auth/Infrastructure/Middleware/AuthMiddleware";
 import { LoginService } from "../../Auth/Application/LoginService";
 import { AuthController } from "../../Auth/Infrastructure/Controllers/AuthController";
-import { WelcomeEmailSubscriber } from "../../Messages/Infrastructure/Subscribers/WelcomeEmailSubscriber";
 import { Logger } from "./Logger";
 import { AppwriteAuthService } from "@/Auth/Application/AppwriteAuthService";
+import { WelcomeEmailSubscriber } from "@/Notification/Infrastructure/Subscribers/WelcomeEmailSubscriber";
+import { EmailService } from "@/Notification/Infrastructure/EmailService";
 
 export class AppContext {
 
@@ -28,6 +29,8 @@ export class AppContext {
     private static authMiddleware : AuthMiddleware;
     private static loginService : LoginService;
     private static authController : AuthController;
+    private static _welcomeEmailSubscriber : WelcomeEmailSubscriber;
+    private static _emailService         = new EmailService();
 
     private static _getRegisterUserService():RegisterUserService {
         return new RegisterUserService(this._userRepository,this._nodeEventEmitterBus);
@@ -73,8 +76,8 @@ export class AppContext {
         const welcomeSubscriber = new WelcomeWhatsAppSubscriber(this._whatsAppSender, this._logger);
         // this.authService = new JwtAuthService();
         welcomeSubscriber.setup(this._nodeEventEmitterBus);
-        const welcomeEmailSubscriber = new WelcomeEmailSubscriber(this._whatsAppSender,this._logger);
-        welcomeEmailSubscriber.setup(this._nodeEventEmitterBus);
+        this._welcomeEmailSubscriber = new WelcomeEmailSubscriber(this._emailService,this._logger);
+        this._welcomeEmailSubscriber.setup(this._nodeEventEmitterBus);
 
     }
 }
